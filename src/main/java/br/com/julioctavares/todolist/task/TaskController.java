@@ -12,9 +12,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import br.com.julioctavares.todolist.utils.Utils;
 import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
@@ -54,10 +54,25 @@ public class TaskController {
   }
 
   @PutMapping("/{id}")
-  public TaskModel update(@RequestBody TaskModel taskModel, HttpServletRequest request, @PathVariable UUID id) {
+  public ResponseEntity update(@RequestBody TaskModel taskModel, HttpServletRequest request, @PathVariable UUID id) {
+
+    var task = this.taskRepository.findById(id).orElse(null);
+
+    if (task == null) {
+      return ResponseEntity.status(404).body("Task not found");
+    }
+
     var userId = request.getAttribute("userId");
-    taskModel.setUserId( (UUID) userId);
-    taskModel.setId(id);
-    return this.taskRepository.save(taskModel);
+
+    if (!task.getUserId().equals(userId)) {
+      return ResponseEntity.status(400).body("User not allowed to update task");
+    }
+
+    Utils.copyNonNullProperties(taskModel, task);
+
+    var taskUpdated = this.taskRepository.save(task);
+
+
+    return ResponseEntity.ok().body(taskUpdated);
   }
 }
