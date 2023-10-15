@@ -7,7 +7,9 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -30,11 +32,11 @@ public class TaskController {
 
     var currentDate = LocalDateTime.now();
 
-    if(currentDate.isAfter(taskModel.getStartAt()) || currentDate.isAfter(taskModel.getEndAt())) {
+    if (currentDate.isAfter(taskModel.getStartAt()) || currentDate.isAfter(taskModel.getEndAt())) {
       return ResponseEntity.badRequest().body("Start Date or End Date is invalid");
     }
-    
-    if(taskModel.getStartAt().isAfter(taskModel.getEndAt())) {
+
+    if (taskModel.getStartAt().isAfter(taskModel.getEndAt())) {
       return ResponseEntity.badRequest().body("Start Date need to be before End Date");
     }
     var taskCreated = this.taskRepository.save(taskModel);
@@ -49,5 +51,13 @@ public class TaskController {
     var tasks = this.taskRepository.findByUserId((UUID) userId);
 
     return tasks;
+  }
+
+  @PutMapping("/{id}")
+  public TaskModel update(@RequestBody TaskModel taskModel, HttpServletRequest request, @PathVariable UUID id) {
+    var userId = request.getAttribute("userId");
+    taskModel.setUserId( (UUID) userId);
+    taskModel.setId(id);
+    return this.taskRepository.save(taskModel);
   }
 }
